@@ -62,6 +62,7 @@ tr:hover{background:#334155}
 .right-count{color:#22c55e;font-weight:bold}
 .wrong-count{color:#ef4444;font-weight:bold}
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -181,11 +182,11 @@ function render() {
   document.getElementById('qnum').textContent = q.num;
   document.getElementById('qtext').textContent = q.q;
   document.getElementById('prog').style.width = ((q.num / 30) * 100) + '%';
-  
+
   const opts = document.getElementById('opts');
   opts.innerHTML = '';
   selected = null;
-  
+
   q.opts.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'option';
@@ -198,7 +199,7 @@ function render() {
     }
     opts.appendChild(btn);
   });
-  
+
   const exp = document.getElementById('exp');
   if (submitted[q.num]) {
     exp.innerHTML = '<strong>Correct Answer: ' + q.ans + '</strong><br><br>' + q.exp;
@@ -211,7 +212,7 @@ function render() {
     document.getElementById('submit').disabled = !selected;
     document.getElementById('submit').textContent = 'Submit Answer';
   }
-  
+
   document.getElementById('prev').disabled = current === 0;
   document.getElementById('next').textContent = current === 29 ? 'See Results →' : 'Next →';
 }
@@ -229,28 +230,28 @@ function submit() {
   const q = questions[current];
   answers[q.num] = selected;
   submitted[q.num] = true;
-  
+
   // Save
   localStorage.setItem('gastro_a_' + name, JSON.stringify(answers));
   localStorage.setItem('gastro_s_' + name, JSON.stringify(submitted));
-  
+
   // Show explanation
   const exp = document.getElementById('exp');
   exp.innerHTML = '<strong>Correct Answer: ' + q.ans + '</strong><br><br>' + q.exp;
   exp.classList.add('show');
-  
+
   document.getElementById('submit').disabled = true;
   document.getElementById('submit').textContent = 'Submitted ✓';
-  
+
   highlight(q.ans);
-  
+
   // Save to all results for analytics
   const all = JSON.parse(localStorage.getItem('gastro_all') || '[]');
   const existing = all.findIndex(r => r.name === name);
   if (existing >= 0) all[existing] = {name, answers, time: new Date().toISOString()};
   else all.push({name, answers, time: new Date().toISOString()});
   localStorage.setItem('gastro_all', JSON.stringify(all));
-  
+
   if (current < 29) setTimeout(() => next(), 1500);
 }
 
@@ -275,18 +276,18 @@ function showResults() {
   document.getElementById('question').style.display = 'none';
   document.getElementById('results').classList.add('show');
   document.getElementById('rname').textContent = name;
-  
+
   let correct = 0, wrong = 0;
   questions.forEach(q => {
     if (answers[q.num] === q.ans) correct++;
     else if (answers[q.num]) wrong++;
   });
-  
+
   document.getElementById('score').textContent = correct + '/30';
   document.getElementById('correct').textContent = correct;
   document.getElementById('wrong').textContent = wrong;
   document.getElementById('percent').textContent = Math.round((correct/30)*100) + '%';
-  
+
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   questions.forEach(q => {
@@ -303,7 +304,44 @@ function showResults() {
 function analytics() {
   document.getElementById('results').style.display = 'none';
   document.getElementById('analytics').classList.add('show');
-  
+
   const all = JSON.parse(localStorage.getItem('gastro_all') || '[]');
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML
+  tbody.innerHTML = '';
+
+  questions.forEach(q => {
+    let right = 0, wrong = 0;
+    all.forEach(r => {
+      if (r.answers[q.num] === q.ans) right++;
+      else if (r.answers[q.num]) wrong++;
+    });
+    const total = right + wrong;
+    const rate = total > 0 ? Math.round((right/total)*100) : 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>Q' + q.num + '</td><td class="right-count">' + right + '</td><td class="wrong-count">' + wrong + '</td><td>' + rate + '%</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function back() {
+  document.getElementById('analytics').classList.remove('show');
+  document.getElementById('analytics').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+}
+
+function restart() {
+  answers = {}; selected = null; submitted = {}; current = 0; name = '';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('start').style.display = 'block';
+  document.getElementById('name').value = '';
+}
+
+// Check if coming from QR with question param
+if (startQ > 1) {
+  document.querySelector('#start p').innerHTML += '<br><br><strong style="color:#38bdf8">Starting at Question ' + startQ + '</strong>';
+}
+</script>
+</body>
+</html>
