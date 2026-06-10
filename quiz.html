@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gastrology Exam</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;background:#0f172a;color:#fff;padding:15px;min-height:100vh}
+.container{max-width:600px;margin:0 auto;background:#1e293b;border-radius:15px;padding:25px;border:2px solid #334155}
+.header{text-align:center;margin-bottom:20px}
+.header h1{color:#38bdf8;font-size:1.5em;margin-bottom:8px}
+.badge{display:inline-block;background:#0ea5e9;color:#fff;padding:5px 15px;border-radius:20px;font-size:.9em;font-weight:bold}
+.progress{height:10px;background:#334155;border-radius:5px;margin-bottom:20px;overflow:hidden}
+.progress-bar{height:100%;background:#0ea5e9;border-radius:5px;transition:width .3s}
+.question{font-size:1.1em;line-height:1.6;margin-bottom:20px;color:#f1f5f9}
+.options{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.option{width:100%;padding:15px;background:#334155;border:2px solid #475569;border-radius:10px;color:#fff;font-size:1em;cursor:pointer;text-align:left;transition:all .2s}
+.option:hover{background:#475569}
+.option.selected{background:#0f766e;border-color:#14b8a6}
+.option.correct{background:#166534;border-color:#22c55e}
+.option.wrong{background:#991b1b;border-color:#ef4444}
+.letter{display:inline-block;width:28px;height:28px;background:#475569;border-radius:50%;text-align:center;line-height:28px;font-weight:bold;margin-right:10px;font-size:.9em}
+.option.selected .letter{background:#14b8a6}
+.option.correct .letter{background:#22c55e}
+.option.wrong .letter{background:#ef4444}
+.btn{width:100%;padding:15px;background:#0ea5e9;border:none;border-radius:10px;color:#fff;font-size:1.1em;font-weight:bold;cursor:pointer;margin-bottom:10px}
+.btn:hover{background:#0284c7}
+.btn:disabled{background:#475569;cursor:not-allowed}
+.explanation{display:none;background:#1e3a5f;border-left:4px solid #38bdf8;padding:15px;border-radius:0 10px 10px 0;margin-top:15px;line-height:1.5;font-size:.95em}
+.explanation.show{display:block}
+.explanation strong{color:#7dd3fc}
+.nav{display:flex;gap:10px;margin-top:15px}
+.nav-btn{flex:1;padding:12px;background:#334155;border:none;border-radius:10px;color:#fff;font-size:.95em;cursor:pointer}
+.nav-btn:hover{background:#475569}
+.nav-btn:disabled{background:#1e293b;color:#64748b;cursor:not-allowed}
+.start{text-align:center}
+.start h2{color:#38bdf8;margin-bottom:15px;font-size:1.4em}
+.start p{color:#94a3b8;margin-bottom:20px;line-height:1.5}
+.input{width:100%;padding:14px;background:#334155;border:2px solid #475569;border-radius:10px;color:#fff;font-size:1em;margin-bottom:15px}
+.input:focus{outline:none;border-color:#0ea5e9}
+.results{text-align:center;display:none}
+.results.show{display:block}
+.score-box{width:140px;height:140px;border-radius:50%;background:#0ea5e9;display:flex;flex-direction:column;justify-content:center;align-items:center;margin:0 auto 25px}
+.score-num{font-size:2.5em;font-weight:bold;color:#fff}
+.score-label{font-size:.85em;color:#e0f2fe}
+.stats{display:flex;justify-content:center;gap:20px;margin-bottom:25px;flex-wrap:wrap}
+.stat{background:#334155;padding:15px 25px;border-radius:10px;text-align:center}
+.stat .num{font-size:1.8em;font-weight:bold;color:#38bdf8}
+.stat .label{font-size:.8em;color:#94a3b8;margin-top:5px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:20px 0}
+.grid-item{padding:10px;border-radius:8px;text-align:center;font-size:.85em;font-weight:bold}
+.grid-item.right{background:#166534;color:#86efac}
+.grid-item.wrong{background:#991b1b;color:#fca5a5}
+.grid-item.pending{background:#334155;color:#94a3b8}
+.analytics{display:none}
+.analytics.show{display:block}
+table{width:100%;border-collapse:collapse;margin-top:15px;font-size:.9em}
+th{background:#0f172a;color:#38bdf8;padding:12px;text-align:left}
+td{padding:10px 12px;border-bottom:1px solid #334155}
+tr:hover{background:#334155}
+.right-count{color:#22c55e;font-weight:bold}
+.wrong-count{color:#ef4444;font-weight:bold}
+</style>
+</head>
+<body>
 
+<div class="container" id="app">
+
+  <!-- START SCREEN -->
+  <div id="start" class="start">
+    <h2>🩺 Gastrology Part 1</h2>
+    <p>Welcome! Enter your name to begin the 30-question exam. You'll see your score and explanations at the end.</p>
+    <input type="text" id="name" class="input" placeholder="Your full name" maxlength="50">
+    <button class="btn" onclick="start()">Start Exam</button>
+  </div>
+
+  <!-- QUESTION SCREEN -->
+  <div id="question" style="display:none">
+    <div class="header">
+      <div class="badge">Question <span id="qnum">1</span> / 30</div>
+    </div>
+    <div class="progress"><div class="progress-bar" id="prog" style="width:3%"></div></div>
+    <div class="question" id="qtext"></div>
+    <div class="options" id="opts"></div>
+    <button class="btn" id="submit" onclick="submit()" disabled>Submit Answer</button>
+    <div class="explanation" id="exp"></div>
+    <div class="nav">
+      <button class="nav-btn" id="prev" onclick="prev()">← Previous</button>
+      <button class="nav-btn" id="next" onclick="next()">Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results" class="results">
+    <h2 style="color:#38bdf8;margin-bottom:10px">Exam Complete!</h2>
+    <p style="color:#94a3b8;margin-bottom:20px">Great job, <span id="rname"></span>!</p>
+    <div class="score-box">
+      <div class="score-num" id="score">0/30</div>
+      <div class="score-label">Your Score</div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="correct">0</div><div class="label">Correct</div></div>
+      <div class="stat"><div class="num" id="wrong">0</div><div class="label">Wrong</div></div>
+      <div class="stat"><div class="num" id="percent">0%</div><div class="label">Percentage</div></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <button class="btn" onclick="analytics()">📊 Class Analytics</button>
+    <button class="nav-btn" style="margin-top:10px" onclick="restart()">Restart</button>
+  </div>
+
+  <!-- ANALYTICS SCREEN -->
+  <div id="analytics" class="analytics">
+    <h2 style="color:#38bdf8;text-align:center;margin-bottom:20px">Class Analytics</h2>
+    <p style="color:#94a3b8;text-align:center;margin-bottom:15px">How students performed on each question</p>
+    <table>
+      <thead><tr><th>Q#</th><th>Correct</th><th>Wrong</th><th>Rate</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <button class="nav-btn" style="margin-top:20px;width:100%" onclick="back()">← Back to Results</button>
+  </div>
+
+</div>
+
+<script>
+// ===== QUESTIONS =====
+const questions = [
+  {num:1,q:"A 28-year-old woman presents with progressive dysphagia to both solids and liquids. She reports intermittent chest fullness and nocturnal regurgitation of undigested food. Recently, she started sleeping in a semi-sitting position to prevent regurgitation. She also noticed mild weight loss over the past few months. What is the most likely diagnosis?",opts:["A. Achalasia","B. Esophageal carcinoma","C. GERD","D. Esophageal stricture"],ans:"A",exp:"Achalasia is characterized by dysphagia to both solids and liquids, regurgitation of undigested food, and nocturnal symptoms. The 'bird beak' appearance on barium swallow is classic."},
+  {num:2,q:"A 41-year-old man reports experiencing recurrent episodes of dysphagia and food impaction during the past several months. Use of over-the-counter omeprazole has not improved his symptoms. He has a history of food allergies, allergic rhinitis, and asthma. His physical examination is unremarkable. Which one of the following diagnoses is the most likely cause of this patient's recurrent food impactions?",opts:["A. Achalasia","B. Diffuse esophageal spasm","C. Reflux esophagitis","D. Eosinophilic esophagitis","E. Esophageal candidiasis"],ans:"D",exp:"Eosinophilic esophagitis is associated with atopy (food allergies, allergic rhinitis, asthma), food impaction, and failure to respond to PPIs. Endoscopy shows mucosal furrowing and circular rings."},
+  {num:3,q:"A 43-year-old man with GERD reports a 2-day history of progressive, severe, sharp pain in his chest and retrosternal discomfort when he swallows liquids and solids. He denies foreign-body ingestion. He has been taking doxycycline for cellulitis in his left leg for the past week. He also takes omeprazole 20mg daily. His examination is normal. An upper endoscopy revealed upper esophagus with punched-out ulcers and normal lower esophagus. Which one of the following interventions is most appropriate for this patient?",opts:["A. Initiate treatment with fluticasone 220ug by mouth twice daily","B. Increase omeprazole to 40mg twice daily","C. Initiate treatment with acyclovir 400mg by mouth five times daily","D. Discontinue oral doxycycline","E. Initiate treatment with fluconazole 200mg by mouth daily"],ans:"D",exp:"Pill-induced esophagitis (doxycycline is a common culprit) presents with odynophagia and punched-out ulcers in the upper esophagus. Management: discontinue the offending medication."},
+  {num:4,q:"A 68-year-old male patient smoker, known to have long standing GERD for 10 years. Presented with progressive dysphagia and weight loss over the last 6 months, not relieved by PPI. He reports no GI symptoms otherwise. What is the most appropriate next step for this patient?",opts:["A. Upper endoscopy","B. Start a new PPI like Esomeprazole","C. H. Pylori test","D. PH monitoring","E. Reassure"],ans:"A",exp:"Alarm features (age >50, dysphagia, weight loss, failure of PPI) mandate upper endoscopy (EGD) to rule out malignancy."},
+  {num:5,q:"A 42-year-old man known case of HTN comes to the office because of heartburn. He has had these symptoms for the past 3 months. He states that symptoms occur almost daily and he has experienced nocturnal awakening because of regurgitation at least twice weekly. This has caused him daytime fatigue and poor concentration at work. He also complains of dry cough and wheezing. He denies any difficulty swallowing, nausea, vomiting, or weight loss. He has tried OTC antacids with no significant relief. He is hemodynamically stable. Physical examination is unremarkable. His BMI is 30 kg/m2. Which of the following is the most appropriate next step in management?",opts:["A. Barium swallow","B. Daily metoclopramide","C. Daily proton pump inhibitor","D. Pulmonary function testing","E. Upper GI endoscopy"],ans:"C",exp:"Young patient with typical GERD symptoms and no alarm features → empirical PPI treatment is first-line."},
+  {num:6,q:"58-year-old man presents with chronic dyspepsia. Laboratory investigation shows microcytic hypochromic anemia. What is the next best step in management?",opts:["A. Esophagogastroduodenoscopy (EGD)","B. H. pylori testing","C. Abdominal ultrasound","D. Trial of proton pump inhibitor"],ans:"A",exp:"Age >60 with red flags (anemia) → Endoscopy is indicated. H. pylori testing is for patients <60 without alarm features."},
+  {num:7,q:"A young woman was treated for H. pylori-associated peptic ulcer disease 1 month ago. She is currently taking esomeprazole 40mg once daily. She asks about confirming eradication of H. pylori. What is the best next step?",opts:["A. No need to confirm eradication","B. Perform urea breath test now","C. Perform stool antigen test now","D. Test after stopping PPI for 2 weeks"],ans:"D",exp:"All patients need confirmation of eradication. PPI should be stopped for at least 2 weeks prior to testing (urea breath test or stool antigen) to avoid false negatives."},
+  {num:8,q:"A 61-year-old male with a significant history of chronic alcohol abuse, who recently achieved abstinence, presents with a new diagnosis of compensated liver cirrhosis. He denies any history of ascites, hepatic encephalopathy, jaundice, hematemesis, or melena. His current vital signs are stable. Physical examination is unremarkable for signs of decompensation. Which of the following is the best next step in managing this patient?",opts:["A. Lactulose","B. Sodium restriction to 2g/day","C. Nadolol","D. Esophagogastroduodenoscopy (EGD)","E. Spironolactone : Furosemide 100:40mg"],ans:"D",exp:"All newly diagnosed patients with liver cirrhosis should receive an EGD to screen for esophageal varices."},
+  {num:9,q:"A 70-year-old female with a history of hepatitis B cirrhosis was admitted to the ICU following a witnessed episode of hematemesis. She is currently sedated and intubated. Her vital signs are stable. Laboratory investigations reveal: AST 60 U/L, ALT 40 U/L, TBi 2.1 mg/dL, albumin 3.2 g/dL, Hb 8 g/dL, INR 1.2, and platelets 75,000/μL. She has been initiated on antibiotics and octreotide infusion. Upper endoscopy reveals fresh blood clot within the stomach and large esophageal varices with red wale signs. Which of the following do you recommend for this patient's secondary prophylaxis?",opts:["A. Endoscopic Band ligation","B. Endoscopic Band ligation and NSBB","C. Start nadolol","D. Referral for TIPS","E. Observation"],ans:"B",exp:"Secondary prophylaxis after variceal bleed: Non-selective beta-blocker (NSBB) AND endoscopic variceal ligation (EVL)."},
+  {num:10,q:"An elderly patient presents with iron deficiency anemia and positive fecal occult blood test. Upper endoscopy and colonoscopy are negative. What is the most likely cause of bleeding?",opts:["A. Angiodysplasia","B. Small bowel adenocarcinoma","C. Meckel diverticulum","D. Small bowel lymphoma"],ans:"A",exp:"In elderly patients with obscure GI bleeding (negative EGD and colonoscopy), angiodysplasia is the most common cause."},
+  {num:11,q:"A patient presents with massive upper GI bleeding. Upper endoscopy shows a large amount of blood in the stomach, but no obvious bleeding source is identified after lavage. What is the most likely diagnosis?",opts:["A. Cameron lesion","B. Dieulafoy lesion","C. Gastric antral vascular ectasia (GAVE)","D. Peptic ulcer disease"],ans:"B",exp:"Dieulafoy lesion is a submucosal vascular abnormality that can cause massive UGIB without an obvious source on endoscopy."},
+  {num:12,q:"A patient undergoing premarital screening has positive anti-HBs antibody, while all other hepatitis B serologies are negative. What does this indicate?",opts:["A. Previous hepatitis B infection","B. Active hepatitis B infection","C. Chronic hepatitis B infection","D. Successful hepatitis B vaccination"],ans:"D",exp:"Isolated anti-HBs positivity indicates immunity from vaccination (no anti-HBc, so not from natural infection)."},
+  {num:13,q:"A patient has positive anti-HBs and positive anti-HBc IgG, while HBsAg is negative. What is the most likely interpretation?",opts:["A. Resolved previous hepatitis B infection","B. Chronic hepatitis B infection","C. Successful hepatitis B vaccination","D. Acute hepatitis B infection"],ans:"A",exp:"Anti-HBs (immunity) + Anti-HBc IgG (past exposure) + negative HBsAg = resolved previous infection."},
+  {num:14,q:"A 29-year-old man with a known history of ulcerative colitis presents with progressive fatigue, jaundice, and pruritus. Laboratory studies show a predominantly cholestatic pattern with markedly elevated alkaline phosphatase. What is the most likely diagnosis?",opts:["A. Primary sclerosing cholangitis","B. Primary biliary cholangitis","C. Autoimmune hepatitis","D. Chronic hepatitis C infection"],ans:"A",exp:"Primary sclerosing cholangitis (PSC) is strongly associated with ulcerative colitis and presents with cholestatic pattern (elevated ALP)."},
+  {num:15,q:"A 54-year-old female with a history of hepatitis C virus (HCV) cirrhosis presents with fever, jaundice, and altered mental status. Her current medication regimen includes spironolactone 150mg/day, furosemide 60mg/day, lactulose, propranolol, and a multivitamin. Initial laboratory investigations reveal: creatinine 3.1 mg/dL (baseline normal), total bilirubin 5 mg/dL, and WBC of 14,000/mm3. Diagnostic paracentesis demonstrates a WBC count of 8,000/μL with 70% neutrophils. Cultures have been obtained. Which of the following is the best next step in managing this patient?",opts:["A. Intravenous cefotaxime 2gm IV Q8hrs","B. IV albumin 1.5g/kg within 6hrs of admission and 1.0g/kg on day 3 plus IV ceftriaxone 1gm daily for 5 days","C. IV ceftriaxone 2g Daily for 5 days and IV albumin 1.5g/kg within 6hrs of admission and 1.0g/kg on day 3","D. Large Volume Paracentesis with albumin"],ans:"C",exp:"Spontaneous bacterial peritonitis (SBP): ascitic fluid PMN >250. Treatment: IV ceftriaxone (or cefotaxime) + IV albumin (1.5g/kg on day 1, 1.0g/kg on day 3) if Cr>1, BUN>30, or TBi>4."},
+  {num:16,q:"A 58-year-old man with decompensated liver cirrhosis is brought to the emergency department because of progressive confusion, daytime somnolence, and disorientation over the past 2 days. On examination, he is lethargic, disoriented, and has asterixis with no focal neurological deficits. What is the most appropriate initial treatment?",opts:["A. Rifaximin","B. Lactulose","C. Metronidazole","D. Protein restriction"],ans:"B",exp:"Hepatic encephalopathy: Lactulose is the first-line treatment. Rifaximin is added for recurrent or refractory cases."},
+  {num:17,q:"A 50-year-old woman presents with fever, right upper quadrant abdominal pain, jaundice, and rigors. Abdominal ultrasound demonstrates multiple gallstones with biliary dilatation. What is the most likely diagnosis?",opts:["A. Ascending cholangitis","B. Acute appendicitis","C. Acute pancreatitis","D. Acute gastritis"],ans:"A",exp:"Charcot's triad: fever, RUQ pain, jaundice = ascending cholangitis. Reynolds pentad adds altered mental status and hypotension."},
+  {num:18,q:"A 62-year-old man presents with fever, right upper quadrant pain, and jaundice. Abdominal ultrasound shows dilated intrahepatic and extrahepatic bile ducts. Laboratory investigations reveal elevated bilirubin and acute kidney injury with rising creatinine. What is the most appropriate next step in management?",opts:["A. Conservative management with IV fluids only","B. MRCP","C. Urgent ERCP","D. Elective cholecystectomy"],ans:"C",exp:"Ascending cholangitis with acute kidney injury requires urgent biliary drainage (ERCP) plus broad-spectrum antibiotics."},
+  {num:19,q:"23-year-old man presents with chronic bloating, abdominal discomfort, and diarrhea that worsen after consuming wheat-containing foods. Serology is positive for anti-endomysial antibodies. Duodenal biopsy demonstrates villous atrophy with flattening of the mucosa. What is the most likely diagnosis?",opts:["A. Celiac disease","B. Lactose intolerance","C. Inflammatory bowel disease","D. Irritable bowel syndrome"],ans:"A",exp:"Celiac disease: wheat/gluten sensitivity, positive anti-endomysial/tTG-IgA antibodies, villous atrophy on biopsy."},
+  {num:20,q:"A 32-year-old woman with poorly controlled celiac disease presents with fatigue and exercise intolerance. She was diagnosed with iron deficiency anemia 3 months ago and started on oral iron therapy, but her symptoms persisted. Laboratory investigations continue to show low hemoglobin, iron, and ferritin levels. What is the most appropriate next step in management?",opts:["A. Continue current oral iron therapy","B. Switch to liquid oral iron preparation","C. Start intravenous iron therapy","D. Increase oral iron tablets to three times daily"],ans:"C",exp:"In celiac disease with malabsorption, oral iron may not be absorbed. IV iron is indicated when oral iron fails."},
+  {num:21,q:"A child newly diagnosed with celiac disease is at increased risk of deficiency of which of the following vitamins?",opts:["A. Vitamin D","B. Vitamin A","C. Vitamin C","D. Vitamin B12"],ans:"A",exp:"Celiac disease causes malabsorption of fat-soluble vitamins (A, D, E, K). Vitamin D deficiency is particularly common and important for bone health."},
+  {num:22,q:"A 26-year-old patient presents with chronic diarrhea, weight loss, bloating, and microcytic anemia. Physical examination reveals a pruritic vesicular rash over the extensor surfaces. Which of the following skin manifestations is most likely associated with this condition?",opts:["A. Erythema nodosum","B. Dermatitis herpetiformis","C. Pyoderma gangrenosum","D. Erythema multiforme"],ans:"B",exp:"Dermatitis herpetiformis is the cutaneous manifestation of celiac disease, presenting as pruritic vesicular rash on extensor surfaces."},
+  {num:23,q:"A 27-year-old man presents with recurrent episodes of bloody diarrhea, urgency, and weight loss. Colonoscopy shows continuous mucosal inflammation extending proximally from the rectum. Which of the following findings is most characteristic of ulcerative colitis compared with Crohn disease?",opts:["A. Noncaseating granulomas","B. Bloody diarrhea","C. Skip lesions","D. Transmural inflammation"],ans:"B",exp:"Bloody diarrhea is characteristic of UC. Skip lesions, transmural inflammation, and noncaseating granulomas are features of Crohn's disease."},
+  {num:24,q:"A 23-year-old man presents with chronic diarrhea, abdominal pain, and weight loss suggestive of inflammatory bowel disease. Colon biopsy is performed. Which histopathological finding is most suggestive of Crohn disease rather than ulcerative colitis?",opts:["A. Crypt abscesses","B. Continuous mucosal inflammation","C. Noncaseating granulomas","D. Rectal involvement"],ans:"C",exp:"Noncaseating granulomas are pathognomonic for Crohn's disease. UC shows continuous inflammation, crypt abscesses, and rectal involvement."},
+  {num:25,q:"A 25-year-old woman presents with chronic diarrhea, abdominal pain, and weight loss. Examination reveals a perianal fistula. Colonoscopy demonstrates segmental involvement of the colon and terminal ileum, and biopsy shows noncaseating granulomas. She was initially treated with corticosteroids. Which of the following is the most appropriate next treatment?",opts:["A. Surgery","B. Antibiotics alone","C. Infliximab","D. Mesalamine"],ans:"C",exp:"Crohn's disease with perianal fistula: Infliximab is the treatment of choice for fistulizing Crohn's disease."},
+  {num:26,q:"A 31-year-old man presents for a routine physical examination and asks when he should start screening for colorectal cancer. He is eager to start as early as possible because he now has a family history: his mother recently had a stage I colon cancer resected at age 55. He has no abdominal pain, weight loss, or rectal bleeding. Which one of the following colorectal cancer screening options should be offered to this patient?",opts:["A. Colonoscopy at age 40","B. Fecal occult-blood testing this year","C. Flexible sigmoidoscopy this year","D. Flexible sigmoidoscopy at age 40","E. Colonoscopy at age 55"],ans:"A",exp:"With one first-degree relative with CRC diagnosed at age <60, screening starts at age 40 or 10 years before the earliest diagnosis (whichever comes first). Colonoscopy is preferred."},
+  {num:27,q:"A 67-year-old woman with a history of coronary artery disease, coronary artery bypass grafting, type 2 diabetes, and peripheral vascular disease reports 2 days of palpitations. A few hours ago, she experienced acute onset of abdominal pain. On examination, she is in distress. Her heart rate is irregularly irregular at 110 beats per minute, and her blood pressure is 100/60 mm Hg. Her abdomen is diffusely tender but soft and without rebound tenderness. ECG showed Atrial Fibrillation. Which one of the following tests is most appropriate in the initial evaluation for this patient?",opts:["A. Colonoscopy","B. Mesenteric duplex ultrasound","C. CT mesenteric angiography","D. Magnetic resonance angiography","E. Upper endoscopy"],ans:"C",exp:"Atrial fibrillation + acute severe abdominal pain + tender soft abdomen without rebound = acute mesenteric ischemia. CT mesenteric angiography is the diagnostic test of choice."},
+  {num:28,q:"A 40-year-old man is evaluated in the emergency department for severe epigastric abdominal pain radiating to the back that has worsened in the past 12 hours. On physical examination, temperature is 39.4°C, blood pressure is 100/60 mm Hg, pulse rate is 110/min, and respiration rate is 28/min. Labs showed: WBC 18,000, ALT 178, AST 145, Total bilirubin 1.1 mg/dL, Lipase 1000. Blood and urine cultures are pending. Fluid resuscitation with lactated Ringer solution is initiated. Which of the following is the most appropriate initial management?",opts:["A. Contrast-enhanced CT","B. Empiric antibiotics","C. Endoscopic ultrasonography","D. Triglyceride measurement"],ans:"A",exp:"Acute pancreatitis with signs of severity (fever, hypotension, tachycardia, leukocytosis) requires contrast-enhanced CT to assess for necrosis and complications."},
+  {num:29,q:"A 44-year-old woman is admitted to the hospital with gallstone associated acute pancreatitis. Physical examination reveals Temp. 37.8°C, P 100, RR 18, and BP 130/80. Her abdomen is diffusely tender with absent bowel sounds. Which of the following is the most reliable predictor of severe pancreatitis in this patient?",opts:["A. White blood cell count of 2.0K","B. Blood glucose 200mg/dl","C. BUN 23mg/dl","D. Impaired mental status","E. Serum lipase 16,000 units"],ans:"D",exp:"BISAP criteria for severe pancreatitis: BUN>25, Impaired mental status, SIRS, Age>60, Pleural effusion. Impaired mental status is a reliable predictor. Lipase level does NOT correlate with severity."},
+  {num:30,q:"A 27-year-old female was referred following a liver biopsy for unexplained abnormal liver function tests and jaundice. She had also become withdrawn and depressed. On examination, she was grimacing, drooling and dysarthric. Her Montreal cognitive assessment score was 24/30. She walked with dystonic posturing of her right arm and was unsteady. Which of the following is the most likely diagnosis?",opts:["A. Hemochromatosis","B. Wilson's Disease","C. Parkinson Disease","D. NPH","E. Miller Fischer Syndrome"],ans:"B",exp:"Wilson's disease: young patient with liver disease + neuropsychiatric symptoms + movement disorder. Kayser-Fleischer rings on slit-lamp exam are diagnostic."}
+];
+
+// ===== STATE =====
+let current = 0, answers = {}, selected = null, submitted = {}, name = "";
+
+// ===== URL PARAMS =====
+const p = new URLSearchParams(location.search);
+const startQ = parseInt(p.get('q')) || 1;
+
+function start() {
+  const n = document.getElementById('name').value.trim();
+  if (!n) { document.getElementById('name').style.borderColor = '#ef4444'; return; }
+  name = n;
+  document.getElementById('start').style.display = 'none';
+  document.getElementById('question').style.display = 'block';
+  current = startQ - 1;
+  if (current < 0) current = 0;
+  if (current >= questions.length) current = 0;
+  render();
+}
+
+function render() {
+  const q = questions[current];
+  document.getElementById('qnum').textContent = q.num;
+  document.getElementById('qtext').textContent = q.q;
+  document.getElementById('prog').style.width = ((q.num / 30) * 100) + '%';
+  
+  const opts = document.getElementById('opts');
+  opts.innerHTML = '';
+  selected = null;
+  
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    const letter = opt.charAt(0);
+    btn.innerHTML = '<span class="letter">' + letter + '</span>' + opt;
+    btn.onclick = () => select(btn, letter);
+    if (answers[q.num] === letter) {
+      btn.classList.add('selected');
+      selected = letter;
+    }
+    opts.appendChild(btn);
+  });
+  
+  const exp = document.getElementById('exp');
+  if (submitted[q.num]) {
+    exp.innerHTML = '<strong>Correct Answer: ' + q.ans + '</strong><br><br>' + q.exp;
+    exp.classList.add('show');
+    document.getElementById('submit').disabled = true;
+    document.getElementById('submit').textContent = 'Submitted ✓';
+    highlight(q.ans);
+  } else {
+    exp.classList.remove('show');
+    document.getElementById('submit').disabled = !selected;
+    document.getElementById('submit').textContent = 'Submit Answer';
+  }
+  
+  document.getElementById('prev').disabled = current === 0;
+  document.getElementById('next').textContent = current === 29 ? 'See Results →' : 'Next →';
+}
+
+function select(btn, letter) {
+  if (submitted[questions[current].num]) return;
+  document.querySelectorAll('.option').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = letter;
+  document.getElementById('submit').disabled = false;
+}
+
+function submit() {
+  if (!selected) return;
+  const q = questions[current];
+  answers[q.num] = selected;
+  submitted[q.num] = true;
+  
+  // Save
+  localStorage.setItem('gastro_a_' + name, JSON.stringify(answers));
+  localStorage.setItem('gastro_s_' + name, JSON.stringify(submitted));
+  
+  // Show explanation
+  const exp = document.getElementById('exp');
+  exp.innerHTML = '<strong>Correct Answer: ' + q.ans + '</strong><br><br>' + q.exp;
+  exp.classList.add('show');
+  
+  document.getElementById('submit').disabled = true;
+  document.getElementById('submit').textContent = 'Submitted ✓';
+  
+  highlight(q.ans);
+  
+  // Save to all results for analytics
+  const all = JSON.parse(localStorage.getItem('gastro_all') || '[]');
+  const existing = all.findIndex(r => r.name === name);
+  if (existing >= 0) all[existing] = {name, answers, time: new Date().toISOString()};
+  else all.push({name, answers, time: new Date().toISOString()});
+  localStorage.setItem('gastro_all', JSON.stringify(all));
+  
+  if (current < 29) setTimeout(() => next(), 1500);
+}
+
+function highlight(ans) {
+  document.querySelectorAll('.option').forEach(btn => {
+    const letter = btn.querySelector('.letter').textContent;
+    if (letter === ans) btn.classList.add('correct');
+    else if (btn.classList.contains('selected') && letter !== ans) btn.classList.add('wrong');
+  });
+}
+
+function next() {
+  if (current < 29) { current++; render(); }
+  else showResults();
+}
+
+function prev() {
+  if (current > 0) { current--; render(); }
+}
+
+function showResults() {
+  document.getElementById('question').style.display = 'none';
+  document.getElementById('results').classList.add('show');
+  document.getElementById('rname').textContent = name;
+  
+  let correct = 0, wrong = 0;
+  questions.forEach(q => {
+    if (answers[q.num] === q.ans) correct++;
+    else if (answers[q.num]) wrong++;
+  });
+  
+  document.getElementById('score').textContent = correct + '/30';
+  document.getElementById('correct').textContent = correct;
+  document.getElementById('wrong').textContent = wrong;
+  document.getElementById('percent').textContent = Math.round((correct/30)*100) + '%';
+  
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  questions.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'grid-item';
+    if (!answers[q.num]) div.classList.add('pending');
+    else if (answers[q.num] === q.ans) { div.classList.add('right'); div.textContent = 'Q' + q.num + ' ✓'; }
+    else { div.classList.add('wrong'); div.textContent = 'Q' + q.num + ' ✗'; }
+    if (!answers[q.num]) div.textContent = 'Q' + q.num + ' ?';
+    grid.appendChild(div);
+  });
+}
+
+function analytics() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('analytics').classList.add('show');
+  
+  const all = JSON.parse(localStorage.getItem('gastro_all') || '[]');
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML
